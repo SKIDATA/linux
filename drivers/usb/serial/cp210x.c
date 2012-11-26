@@ -129,6 +129,23 @@ static const struct usb_device_id id_table[] = {
 	{ USB_DEVICE(0x10C5, 0xEA61) }, /* Silicon Labs MobiData GPRS USB Modem */
 	{ USB_DEVICE(0x10CE, 0xEA6A) }, /* Silicon Labs MobiData GPRS USB Modem 100EU */
 	{ USB_DEVICE(0x13AD, 0x9999) }, /* Baltech card reader */
+	{ USB_DEVICE(0x1411, 0x0004) }, /* SKIDATA AG shortrange */
+	{ USB_DEVICE(0x1411, 0x0008) }, /* SKIDATA AG longrange */
+	{ USB_DEVICE(0x1411, 0x000A) }, /* SKIDATA AG shortrange adapter */
+	{ USB_DEVICE(0x1411, 0x000B) }, /* SKIDATA AG skichip reader */
+	{ USB_DEVICE(0x1411, 0x000C) }, /* SKIDATA AG rs232 */
+	{ USB_DEVICE(0x1411, 0x000D) }, /* SKIDATA AG sio450 */
+	{ USB_DEVICE(0x1411, 0x000F) }, /* SKIDATA AG nfc add on */
+	{ USB_DEVICE(0x1411, 0x0013) }, /* SKIDATA AG ea15 scanner */
+	{ USB_DEVICE(0x1411, 0x0015) }, /* SKIDATA AG sd792 serial x4 */
+	{ USB_DEVICE(0x1411, 0x0016) }, /* SKIDATA AG sd792 serial x5 */
+	{ USB_DEVICE(0x1411, 0x0017) }, /* SKIDATA AG sd792 serial x6 */
+	{ USB_DEVICE(0x1411, 0x0018) }, /* SKIDATA AG usb sio stick */
+	{ USB_DEVICE(0x1411, 0x0019) }, /* SKIDATA AG coder lite opos */
+	{ USB_DEVICE(0x1411, 0x001B) }, /* SKIDATA AG ticketreader mobile */
+	{ USB_DEVICE(0x1411, 0x001C) }, /* SKIDATA AG ticketreader wall/desk */
+	{ USB_DEVICE(0x1411, 0x001D) }, /* SKIDATA AG ticketreader unlimited */
+	{ USB_DEVICE(0x1411, 0x001F) }, /* SKIDATA AG print@gate */
 	{ USB_DEVICE(0x1555, 0x0004) }, /* Owen AC4 USB-RS485 Converter */
 	{ USB_DEVICE(0x166A, 0x0303) }, /* Clipsal 5500PCU C-Bus USB interface */
 	{ USB_DEVICE(0x16D6, 0x0001) }, /* Jablotron serial interface */

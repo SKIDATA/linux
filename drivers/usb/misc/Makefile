@@ -20,6 +20,7 @@ obj-$(CONFIG_USB_LD)			+= ldusb.o
 obj-$(CONFIG_USB_LED)			+= usbled.o
 obj-$(CONFIG_USB_LEGOTOWER)		+= legousbtower.o
 obj-$(CONFIG_USB_RIO500)		+= rio500.o
+obj-$(CONFIG_USB_SD675)			+= sdusb.o
 obj-$(CONFIG_USB_TEST)			+= usbtest.o
 obj-$(CONFIG_USB_TRANCEVIBRATOR)	+= trancevibrator.o
 obj-$(CONFIG_USB_USS720)		+= uss720.o
