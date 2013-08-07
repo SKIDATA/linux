@@ -61,6 +61,9 @@ static struct i2c_board_info stc_i2c1_board_info[] __initdata = {
 
 static struct i2c_board_info stc_i2c2_gen2_board_info[] __initdata = {
 	{
+		I2C_BOARD_INFO("fm24cl64b", 0x51),
+	},
+	{
 		I2C_BOARD_INFO("pcf8523", 0x68),
 	},
 };
