@@ -1187,3 +1187,8 @@
  */
 /* ZigBee controller */
 #define FTDI_RF_R106		0x8A28
+
+/*
+ * SKIDATA FTDI vendor ID
+ */
+#define FTDI_SKIDATA_VID	0x1411

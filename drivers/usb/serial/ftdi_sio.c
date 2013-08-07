@@ -844,6 +844,8 @@ static struct usb_device_id id_table_combined [] = {
 	{ USB_DEVICE(ST_VID, ST_STMCLT1030_PID),
 		.driver_info = (kernel_ulong_t)&ftdi_stmclite_quirk },
 	{ USB_DEVICE(FTDI_VID, FTDI_RF_R106) },
+	{ USB_DEVICE(FTDI_SKIDATA_VID, 0x0024) }, /* sd861: serial extension print */
+	{ USB_DEVICE(FTDI_SKIDATA_VID, 0x0025) }, /* sd846: input board */
 	{ },					/* Optional parameter entry */
 	{ }					/* Terminating entry */
 };
