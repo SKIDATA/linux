@@ -552,6 +552,12 @@ static const struct snd_soc_dapm_widget tec_ng_dapm_widgets[] = {
 	SND_SOC_DAPM_LINE("Line In", NULL),
 };
 
+static const struct snd_soc_dapm_widget skidata_carrier_dapm_widgets[] = {
+	SND_SOC_DAPM_SPK("Int Spk", tegra_wm8903_event_int_spk),
+	SND_SOC_DAPM_HP("Headphone Jack", tegra_wm8903_event_hp),
+	SND_SOC_DAPM_MIC("Digital Mic", NULL),
+};
+
 static const struct snd_soc_dapm_widget tegra_wm8903_default_dapm_widgets[] = {
 	SND_SOC_DAPM_SPK("Int Spk", tegra_wm8903_event_int_spk),
 	SND_SOC_DAPM_HP("Headphone Jack", tegra_wm8903_event_hp),
@@ -667,6 +673,14 @@ static const struct snd_soc_dapm_route tec_ng_audio_map[] = {
 	{"Mic Bias", NULL, "Mic Jack"},
 	{"IN2R", NULL, "Mic Bias"},
 	{"IN3R", NULL, "Line In"},
+	{"DMICDAT", NULL, "Digital Mic"},
+};
+
+static const struct snd_soc_dapm_route skidata_carrier_audio_map[] = {
+	{"Int Spk", NULL, "ROP"},
+	{"Int Spk", NULL, "RON"},
+	{"Int Spk", NULL, "LOP"},
+	{"Int Spk", NULL, "LON"},
 	{"DMICDAT", NULL, "Digital Mic"},
 };
 
@@ -1023,6 +1037,12 @@ static __devinit int tegra_wm8903_driver_probe(struct platform_device *pdev)
 
 		card->dapm_widgets = tec_ng_dapm_widgets;
 		card->num_dapm_widgets = ARRAY_SIZE(tec_ng_dapm_widgets);
+	} else if (machine_is_skidata_carrier()) {
+		card->controls = tegra_wm8903_default_controls;
+		card->num_controls = ARRAY_SIZE(tegra_wm8903_default_controls);
+
+		card->dapm_widgets = skidata_carrier_dapm_widgets;
+		card->num_dapm_widgets = ARRAY_SIZE(skidata_carrier_dapm_widgets);
 	} else {
 		card->controls = tegra_wm8903_default_controls;
 		card->num_controls = ARRAY_SIZE(tegra_wm8903_default_controls);
@@ -1052,6 +1072,9 @@ static __devinit int tegra_wm8903_driver_probe(struct platform_device *pdev)
 	} else if (machine_is_tec_ng()) {
 		card->dapm_routes = tec_ng_audio_map;
 		card->num_dapm_routes = ARRAY_SIZE(tec_ng_audio_map);
+	} else if (machine_is_skidata_carrier()) {
+		card->dapm_routes = skidata_carrier_audio_map;
+		card->num_dapm_routes = ARRAY_SIZE(skidata_carrier_audio_map);
 	} else {
 		card->dapm_routes = aebl_audio_map;
 		card->num_dapm_routes = ARRAY_SIZE(aebl_audio_map);

@@ -280,6 +280,16 @@ config MACH_PLUTUX
 	  The board has only HDMI as display, so the platform will select
 	  the requirements for HDMI.
 
+config MACH_SKIDATA_CARRIER
+	bool "Skidata carrier board"
+	depends on COM_TAMONTEN
+	select COM_TAMONTEN_LVDS
+	select COM_TAMONTEN_HDMI
+	select TAMONTEN_WM8903 if SND_SOC
+	select TAMONTEN_TSC2007 if INPUT
+	help
+	  Support the SkiData platform based on Avionic Design GmbH Tamonten
+
 choice
        prompt "Tegra platform type"
        default TEGRA_SILICON_PLATFORM

@@ -247,3 +247,5 @@ obj-${CONFIG_TEGRA_BB_XMM_POWER2}       += baseband-xmm-power2.o
 
 obj-$(CONFIG_MACH_PLUTUX)               += board-plutux.o
 obj-$(CONFIG_MACH_PLUTUX)               += board-plutux-hdmi.o
+
+obj-$(CONFIG_MACH_SKIDATA_CARRIER)      += board-skidata-carrier.o
