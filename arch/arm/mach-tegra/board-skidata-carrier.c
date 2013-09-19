@@ -21,6 +21,10 @@
 #include <linux/i2c/adnp.h>
 #include <linux/regulator/machine.h>
 #include <linux/regulator/fixed.h>
+#include <linux/mt9v126.h>
+
+#include <media/soc_camera.h>
+#include <media/tegra_v4l2_camera.h>
 
 #include <asm/mach-types.h>
 #include <asm/mach/arch.h>
@@ -116,6 +120,65 @@ static int __init skidata_display_init(void)
 				     &tamonten_hdmi_disp_pdata);
 }
 
+#ifdef CONFIG_VIDEO_TEGRA
+static int skidata_camera_enable(struct nvhost_device *ndev)
+{
+	gpio_set_value_cansleep(SKIDATA_GPIO_CCD_nPWRDN, 1);
+	return 0;
+}
+
+static void skidata_camera_disable(struct nvhost_device *ndev)
+{
+	gpio_set_value_cansleep(SKIDATA_GPIO_CCD_nPWRDN, 0);
+}
+
+static struct mt9v126_platform_data mt9v126_pdata = {
+	.reset_gpio = SKIDATA_GPIO_CCD_nRST,
+	.progressive = 1,
+};
+
+static struct i2c_board_info skidata_camera_bus_board_info[] = {
+	{
+		I2C_BOARD_INFO("mt9v126", 0x48),
+	},
+};
+
+static struct soc_camera_link skidata_camera_iclink = {
+	.bus_id = -1,
+	.i2c_adapter_id = 3,
+	.board_info = skidata_camera_bus_board_info,
+	.priv = &mt9v126_pdata,
+};
+
+static struct platform_device skidata_soc_camera = {
+	.name = "soc-camera-pdrv",
+	.id = 0,
+	.dev = {
+		.platform_data = &skidata_camera_iclink,
+	},
+};
+
+static struct tegra_camera_platform_data skidata_camera_platform_data = {
+	.enable_camera = skidata_camera_enable,
+	.disable_camera = skidata_camera_disable,
+	.flip_v = 0,
+	.flip_h = 0,
+	.port = TEGRA_CAMERA_PORT_VIP,
+};
+
+static void __init skidata_camera_init(void)
+{
+	gpio_request(SKIDATA_GPIO_CCD_nPWRDN, "ccd_npwrdn");
+	gpio_direction_output(SKIDATA_GPIO_CCD_nPWRDN, 0);
+
+	tegra_camera_device.dev.platform_data = &skidata_camera_platform_data;
+	nvhost_device_register(&tegra_camera_device);
+	platform_device_register(&skidata_soc_camera);
+}
+#else
+static void __init skidata_camera_init(void) {}
+#endif /* CONFIG_VIDEO_TEGRA */
+
 static void __init skidata_init(void)
 {
 	tamonten_init();
@@ -123,6 +186,7 @@ static void __init skidata_init(void)
 
 	skidata_gpio_init();
 	skidata_i2c_init();
+	skidata_camera_init();
 	skidata_display_init();
 }
 
