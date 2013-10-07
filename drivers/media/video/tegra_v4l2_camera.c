@@ -285,6 +285,8 @@ struct tegra_camera_dev {
 	struct vb2_alloc_ctx		*alloc_ctx;
 	enum v4l2_field			field;
 	int				sequence;
+	enum v4l2_mbus_type		mbus_type;
+	unsigned long			mbus_flags;
 
 	struct work_struct		work;
 	struct mutex			work_mutex;
@@ -340,6 +342,31 @@ static const struct soc_mbus_pixelfmt tegra_camera_formats[] = {
 		.order			= SOC_MBUS_ORDER_LE,
 	},
 };
+
+/* All the formats supported have the same stride size */
+static int pix_bytes_per_line(unsigned int width)
+{
+	return roundup(width, 2) * 2;
+}
+
+static int pix_format_set_size(struct v4l2_pix_format *pix, u32 fourcc)
+{
+	switch(fourcc) {
+	case V4L2_PIX_FMT_UYVY:
+	case V4L2_PIX_FMT_VYUY:
+	case V4L2_PIX_FMT_YUYV:
+	case V4L2_PIX_FMT_YVYU:
+		pix->bytesperline = pix_bytes_per_line(pix->width);
+		pix->sizeimage = pix->height * pix->bytesperline;
+		return 0;
+	case V4L2_PIX_FMT_YUV420:
+	case V4L2_PIX_FMT_YVU420:
+		pix->bytesperline = 0;
+		pix->sizeimage = pix->width * pix->height * 3 / 2;
+		return 0;
+	}
+	return -EINVAL;
+}
 
 static struct tegra_buffer *to_tegra_vb(struct vb2_buffer *vb)
 {
@@ -537,13 +564,17 @@ static void tegra_camera_capture_setup_vip(struct tegra_camera_dev *pcdev,
 					     int input_format,
 					     int yuv_input_format)
 {
+	int bt656 = (pcdev->mbus_type == V4L2_MBUS_BT656);
 	struct soc_camera_device *icd = pcdev->icd;
+	unsigned h_active_start = bt656 ? TEGRA_VIP_H_ACTIVE_START : 0;
+	unsigned v_active_start = bt656 ? TEGRA_VIP_V_ACTIVE_START : 0;
+	int field_detect = (pcdev->field == V4L2_FIELD_ALTERNATE);
 
 	TC_VI_REG_WT(pcdev, TEGRA_VI_VI_CORE_CONTROL, 0x00000000);
 
 	TC_VI_REG_WT(pcdev, TEGRA_VI_VI_INPUT_CONTROL,
-		(1 << 27) | /* field detect */
-		(1 << 25) | /* hsync/vsync decoded from data (BT.656) */
+		(field_detect << 27) | /* field detect */
+		(bt656 << 25) | /* hsync/vsync decoded from data (BT.656) */
 		(yuv_input_format << 8) |
 		(1 << 1) | /* VIP_INPUT_ENABLE */
 		(input_format << 2));
@@ -553,17 +584,19 @@ static void tegra_camera_capture_setup_vip(struct tegra_camera_dev *pcdev,
 
 	/* VIP H_ACTIVE and V_ACTIVE */
 	TC_VI_REG_WT(pcdev, TEGRA_VI_VIP_H_ACTIVE,
-		(icd->user_width << 16) |
-		TEGRA_VIP_H_ACTIVE_START);
+		(roundup(icd->user_width + h_active_start, 2) << 16) |
+		h_active_start);
 	TC_VI_REG_WT(pcdev, TEGRA_VI_VIP_V_ACTIVE,
-		(icd->user_height << 16) |
-		TEGRA_VIP_V_ACTIVE_START);
+		((icd->user_height + v_active_start) << 16) |
+		v_active_start);
 
 	/*
 	 * For VIP, D9..D2 is mapped to the video decoder's P7..P0.
-	 * Disable/mask out the other Dn wires.
+	 * Disable/mask out the other Dn wires. When not in BT656
+	 * mode we also need the V/H sync.
 	 */
-	TC_VI_REG_WT(pcdev, TEGRA_VI_PIN_INPUT_ENABLE, 0x000003fc);
+	TC_VI_REG_WT(pcdev, TEGRA_VI_PIN_INPUT_ENABLE,
+		     0x000003fc | (bt656 ? 0 : 0x6000));
 	TC_VI_REG_WT(pcdev, TEGRA_VI_VI_DATA_INPUT_CONTROL, 0x000003fc);
 	TC_VI_REG_WT(pcdev, TEGRA_VI_PIN_INVERSION, 0x00000000);
 
@@ -585,8 +618,9 @@ static void tegra_camera_capture_setup(struct tegra_camera_dev *pcdev)
 	int yuv_output_format = 0x0;
 	int output_format = 0x3; /* Default to YUV422 */
 	int port = pcdev->pdata->port;
-	int bytes_per_line = soc_mbus_bytes_per_line(icd->user_width,
-						icd->current_fmt->host_fmt);
+	int stride_l = pix_bytes_per_line(icd->user_width);
+	int stride_c = (output_fourcc == V4L2_PIX_FMT_YUV420 ||
+			output_fourcc == V4L2_PIX_FMT_YVU420);
 
 	switch (input_code) {
 	case V4L2_MBUS_FMT_UYVY8_2X8:
@@ -672,7 +706,7 @@ static void tegra_camera_capture_setup(struct tegra_camera_dev *pcdev)
 		(icd->user_height << 16) | icd->user_width);
 
 	TC_VI_REG_WT(pcdev, TEGRA_VI_VB0_BUFFER_STRIDE_FIRST,
-		(icd->user_height * bytes_per_line));
+		(stride_c << 30) | stride_l);
 
 	TC_VI_REG_WT(pcdev, TEGRA_VI_VI_ENABLE, 0x00000000);
 }
@@ -912,7 +946,15 @@ static int tegra_camera_capture_frame(struct tegra_camera_dev *pcdev)
 		pcdev->active = NULL;
 
 	do_gettimeofday(&vb->v4l2_buf.timestamp);
-	vb->v4l2_buf.field = pcdev->field;
+	if (pcdev->field == V4L2_FIELD_ALTERNATE) {
+		u32 status = TC_VI_REG_RD(pcdev, TEGRA_VI_INTERRUPT_STATUS);
+
+		if (status & (1 << 20))
+			vb->v4l2_buf.field = V4L2_FIELD_BOTTOM;
+		else
+			vb->v4l2_buf.field = V4L2_FIELD_TOP;
+	} else
+		vb->v4l2_buf.field = pcdev->field;
 	vb->v4l2_buf.sequence = pcdev->sequence++;
 
 	vb2_buffer_done(vb, err < 0 ? VB2_BUF_STATE_ERROR : VB2_BUF_STATE_DONE);
@@ -990,8 +1032,7 @@ static void tegra_camera_init_buffer(struct tegra_camera_dev *pcdev,
 				     struct tegra_buffer *buf)
 {
 	struct soc_camera_device *icd = pcdev->icd;
-	int bytes_per_line = soc_mbus_bytes_per_line(icd->user_width,
-						icd->current_fmt->host_fmt);
+	int bytes_per_line;
 
 	switch (icd->current_fmt->host_fmt->fourcc) {
 	case V4L2_PIX_FMT_UYVY:
@@ -1000,6 +1041,7 @@ static void tegra_camera_init_buffer(struct tegra_camera_dev *pcdev,
 	case V4L2_PIX_FMT_YVYU:
 		buf->buffer_addr = vb2_dma_nvmap_plane_paddr(&buf->vb, 0);
 		buf->start_addr = buf->buffer_addr;
+		bytes_per_line = pix_bytes_per_line(icd->user_width);
 
 		if (pcdev->pdata->flip_v)
 			buf->start_addr += bytes_per_line *
@@ -1323,6 +1365,51 @@ static void tegra_camera_remove_device(struct soc_camera_device *icd)
 static int tegra_camera_set_bus_param(struct soc_camera_device *icd,
 					__u32 pixfmt)
 {
+	struct soc_camera_host *ici = to_soc_camera_host(icd->parent);
+	struct v4l2_subdev *sd = soc_camera_to_subdev(icd);
+	struct tegra_camera_dev *pcdev = ici->priv;
+	unsigned long cam_flags, host_flags;
+	struct v4l2_mbus_config mc;
+	int err, port = pcdev->pdata->port;
+
+	/* Try to get the bus config, if it fails assume some default */
+	err = v4l2_subdev_call(sd, video, g_mbus_config, &mc);
+	if (err) {
+		dev_warn(icd->parent,
+			 "Failed to get media bus config, using default\n");
+		if (pcdev->pdata->port == TEGRA_CAMERA_PORT_VIP)
+			pcdev->mbus_type = V4L2_MBUS_BT656;
+		else
+			pcdev->mbus_type = V4L2_MBUS_CSI2;
+	} else
+		pcdev->mbus_type = mc.type;
+
+	/* Check that the bus type is supported by the port */
+	if ((port == TEGRA_CAMERA_PORT_VIP &&
+	     pcdev->mbus_type != V4L2_MBUS_PARALLEL &&
+	     pcdev->mbus_type != V4L2_MBUS_BT656) ||
+	    ((port == TEGRA_CAMERA_PORT_CSI_A ||
+	      port == TEGRA_CAMERA_PORT_CSI_B) &&
+	     pcdev->mbus_type != V4L2_MBUS_CSI2)) {
+		dev_err(icd->parent, "Bus type unsupported by port\n");
+		return -EINVAL;
+	}
+
+	/* Compute the common flags */
+	cam_flags = icd->ops->query_bus_param(icd);
+	host_flags = SOCAM_MASTER |
+		SOCAM_HSYNC_ACTIVE_HIGH |
+		SOCAM_VSYNC_ACTIVE_HIGH |
+		SOCAM_PCLK_SAMPLE_RISING |
+		SOCAM_DATA_ACTIVE_HIGH |
+		SOCAM_DATAWIDTH_8;
+
+	pcdev->mbus_flags = soc_camera_bus_param_compatible(
+		cam_flags, host_flags);
+	if (!pcdev->mbus_flags) {
+		dev_err(icd->parent, "No compatible bus format found\n");
+		return -EINVAL;
+	}
 	return 0;
 }
 
@@ -1448,11 +1535,11 @@ static int tegra_camera_try_fmt(struct soc_camera_device *icd,
 		return -EINVAL;
 	}
 
-	pix->bytesperline = soc_mbus_bytes_per_line(pix->width,
-						    xlate->host_fmt);
-	if (pix->bytesperline < 0)
-		return pix->bytesperline;
-	pix->sizeimage = pix->height * pix->bytesperline;
+	ret = pix_format_set_size(pix, xlate->host_fmt->fourcc);
+	if (ret) {
+		dev_warn(icd->parent, "Unsupported output format %x\n", pixfmt);
+		return ret;
+	}
 
 	/* limit to sensor capabilities */
 	mf.width	= pix->width;
@@ -1472,9 +1559,11 @@ static int tegra_camera_try_fmt(struct soc_camera_device *icd,
 	 * width and height could have been changed, therefore update the
 	 * bytesperline and sizeimage here.
 	 */
-	pix->bytesperline = soc_mbus_bytes_per_line(pix->width,
-						    xlate->host_fmt);
-	pix->sizeimage = pix->height * pix->bytesperline;
+	ret = pix_format_set_size(pix, xlate->host_fmt->fourcc);
+	if (ret) {
+		dev_warn(icd->parent, "Unsupported output format %x\n", pixfmt);
+		return ret;
+	}
 
 	switch (mf.field) {
 	case V4L2_FIELD_ANY:
