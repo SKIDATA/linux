@@ -266,6 +266,7 @@ config COM_TAMONTEN_UARTB
 config COM_TAMONTEN_UARTB_ID
 	int
 	depends on COM_TAMONTEN_UARTB
+	default 1 if MACH_SKIDATA_CARRIER
 	default 2 if MACH_PLUTUX
 	default 2 if MACH_TEC_NG
 	default -1
@@ -338,6 +339,7 @@ config MACH_PLUTUX
 config MACH_SKIDATA_CARRIER
 	bool "Skidata carrier board"
 	depends on COM_TAMONTEN
+	select COM_TAMONTEN_UARTB
 	select COM_TAMONTEN_LVDS
 	select COM_TAMONTEN_HDMI
 	select TAMONTEN_ADNP
