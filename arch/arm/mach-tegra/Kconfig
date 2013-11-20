@@ -183,14 +183,6 @@ config MACH_CARDHU
        help
          Support for NVIDIA Cardhu development platform
 
-config MACH_TEC_NG
-       bool "Tamonten Evaluation Carrier NG (TEC-NG) Board"
-       depends on ARCH_TEGRA_3x_SOC
-       select MACH_HAS_SND_SOC_TEGRA_WM8903 if SND_SOC
-       help
-         Support for Avionic Design Tamonten Evaluation Carrier developtment
-         platform.
-
 config MACH_P1852
        bool "P1852 board"
        depends on ARCH_TEGRA_3x_SOC
@@ -226,36 +218,95 @@ config MACH_KAI
        help
          Support for NVIDIA KAI development platform
 
+menuconfig TAMONTEN
+	bool "Avionic Design Tamonten Boards"
+
+if TAMONTEN
+
+choice
+	prompt "CPU Module"
+	default COM_TAMONTEN
+
 config COM_TAMONTEN
 	bool "Tamonten COM"
-	select ARCH_TEGRA_2x_SOC
+	depends on ARCH_TEGRA_2x_SOC
 	select TEGRA_SILICON_PLATFORM
 	select I2C_TEGRA
 	select MFD_TPS6586X
 	select REGULATOR_TPS6586X
 
-config COM_TAMONTEN_LVDS
-	bool "LVDS support on Tamonten"
-	depends on COM_TAMONTEN
+config COM_TAMONTEN_NG
+	bool "Tamonten NG COM"
+	depends on ARCH_TEGRA_3x_SOC
+	select TEGRA_SILICON_PLATFORM
+	select I2C_TEGRA
+	select MFD_TPS65910
+	select REGULATOR_TPS65910
+	help
+	  Support for Avionic Design TEC NG COM module
+
+endchoice
+
+config COM_TAMONTEN_DISPLAY
+	bool "Display support on Tamonten"
 	select TEGRA_GRHOST
 	select TEGRA_DC
+
+config COM_TAMONTEN_UARTA
+	bool
+
+config COM_TAMONTEN_UARTA_ID
+	int
+	depends on COM_TAMONTEN_UARTA
+	default -1
+
+config COM_TAMONTEN_UARTB
+	bool
+
+config COM_TAMONTEN_UARTB_ID
+	int
+	depends on COM_TAMONTEN_UARTB
+	default 2 if MACH_PLUTUX
+	default 2 if MACH_TEC_NG
+	default -1
+
+config COM_TAMONTEN_UARTC
+	bool
+
+config COM_TAMONTEN_UARTC_ID
+	int
+	depends on COM_TAMONTEN_UARTC
+	default 1 if MACH_MEDCOM_WIDE
+	default 1 if MACH_PLUTUX
+	default 1 if MACH_TEC_NG
+	default -1
+
+config COM_TAMONTEN_LVDS
+	bool "LVDS support on Tamonten"
+	select COM_TAMONTEN_DISPLAY
 
 config COM_TAMONTEN_HDMI
 	bool "HDMI support on Tamonten"
-	depends on COM_TAMONTEN
-	select TEGRA_GRHOST
-	select TEGRA_DC
+	select COM_TAMONTEN_DISPLAY
 
 config TAMONTEN_WM8903
-	bool
+	bool "WM8903 support on Tamonten"
 	select MACH_HAS_SND_SOC_TEGRA_WM8903
 	select SND_SOC_TEGRA_WM8903
 	help
 	  Support for the WM8903 audio codec found on many Tamonten base
 	  boards.
 
+config TAMONTEN_ADNP
+	bool "Avionic Design GPIO expander support on Tamonten"
+	select GPIO_ADNP
+	select GPIO_ADNP_IRQ
+	help
+	  Support for the Avionic Design GPIO expander found on some Tamonten
+	  base boards.
+
 config TAMONTEN_TSC2007
-	bool
+	bool "TSC2007 support on Tamonten"
 	select INPUT_TOUCHSCREEN
 	select TOUCHSCREEN_TSC2007
 	help
@@ -264,15 +315,19 @@ config TAMONTEN_TSC2007
 
 config MACH_MEDCOM_WIDE
 	bool "Medcom-Wide board"
-	depends on COM_TAMONTEN
+	depends on COM_TAMONTEN || COM_TAMONTEN_NG
+	select COM_TAMONTEN_UARTC
 	select COM_TAMONTEN_LVDS
+	select TAMONTEN_ADNP
 	select TAMONTEN_WM8903 if SND_SOC
 	help
 	  Support for Avionic Design Medcom-Wide boards
 
 config MACH_PLUTUX
 	bool "Plutux board"
-	depends on COM_TAMONTEN
+	depends on COM_TAMONTEN || COM_TAMONTEN_NG
+	select COM_TAMONTEN_UARTB
+	select COM_TAMONTEN_UARTC
 	select COM_TAMONTEN_HDMI
 	select TAMONTEN_WM8903 if SND_SOC
 	help
@@ -289,6 +344,22 @@ config MACH_SKIDATA_CARRIER
 	select TAMONTEN_TSC2007 if INPUT
 	help
 	  Support the SkiData platform based on Avionic Design GmbH Tamonten
+
+config MACH_TEC_NG
+	bool "Tamonten Evaluation Carrier NG (TEC-NG) Board"
+	depends on COM_TAMONTEN || COM_TAMONTEN_NG
+	select COM_TAMONTEN_UARTB
+	select COM_TAMONTEN_UARTC
+	select COM_TAMONTEN_HDMI
+	select COM_TAMONTEN_LVDS
+	select TAMONTEN_ADNP
+	select TAMONTEN_WM8903 if SND_SOC
+	select TAMONTEN_TSC2007 if INPUT
+	help
+	  Support for Avionic Design Tamonten Evaluation Carrier developtment
+	  platform.
+
+endif
 
 choice
        prompt "Tegra platform type"

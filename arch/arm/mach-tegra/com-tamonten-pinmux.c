@@ -20,7 +20,6 @@
 #include <linux/init.h>
 #include <mach/pinmux.h>
 
-#include "gpio-names.h"
 #include "com-tamonten.h"
 
 #define DEFAULT_DRIVE(_name)					\
@@ -70,8 +69,8 @@ static struct tegra_pingroup_config tamonten_pinmux[] __initdata = {
 	{ TEGRA_PINGROUP_GPV,   TEGRA_MUX_PCIE,          TEGRA_PUPD_NORMAL,    TEGRA_TRI_TRISTATE },
 	{ TEGRA_PINGROUP_HDINT, TEGRA_MUX_HDMI,          TEGRA_PUPD_PULL_UP,   TEGRA_TRI_TRISTATE },
 	{ TEGRA_PINGROUP_I2CP,  TEGRA_MUX_I2C,           TEGRA_PUPD_NORMAL,    TEGRA_TRI_NORMAL   },
-	{ TEGRA_PINGROUP_IRRX,  TEGRA_MUX_UARTB,         TEGRA_PUPD_PULL_UP,   TEGRA_TRI_NORMAL   },
-	{ TEGRA_PINGROUP_IRTX,  TEGRA_MUX_UARTB,         TEGRA_PUPD_PULL_UP,   TEGRA_TRI_NORMAL   },
+	{ TEGRA_PINGROUP_IRRX,  TEGRA_MUX_UARTA,         TEGRA_PUPD_PULL_UP,   TEGRA_TRI_NORMAL   },
+	{ TEGRA_PINGROUP_IRTX,  TEGRA_MUX_UARTA,         TEGRA_PUPD_PULL_UP,   TEGRA_TRI_NORMAL   },
 	{ TEGRA_PINGROUP_KBCA,  TEGRA_MUX_KBC,           TEGRA_PUPD_PULL_UP,   TEGRA_TRI_NORMAL   },
 	{ TEGRA_PINGROUP_KBCB,  TEGRA_MUX_KBC,           TEGRA_PUPD_PULL_UP,   TEGRA_TRI_NORMAL   },
 	{ TEGRA_PINGROUP_KBCC,  TEGRA_MUX_KBC,           TEGRA_PUPD_PULL_UP,   TEGRA_TRI_NORMAL   },
@@ -143,7 +142,7 @@ static struct tegra_pingroup_config tamonten_pinmux[] __initdata = {
 	{ TEGRA_PINGROUP_UAA,   TEGRA_MUX_ULPI,          TEGRA_PUPD_PULL_UP,   TEGRA_TRI_TRISTATE },
 	{ TEGRA_PINGROUP_UAB,   TEGRA_MUX_ULPI,          TEGRA_PUPD_PULL_UP,   TEGRA_TRI_TRISTATE },
 	{ TEGRA_PINGROUP_UAC,   TEGRA_MUX_RSVD2,         TEGRA_PUPD_NORMAL,    TEGRA_TRI_TRISTATE },
-	{ TEGRA_PINGROUP_UAD,   TEGRA_MUX_IRDA,          TEGRA_PUPD_PULL_UP,   TEGRA_TRI_TRISTATE },
+	{ TEGRA_PINGROUP_UAD,   TEGRA_MUX_UARTB,         TEGRA_PUPD_PULL_UP,   TEGRA_TRI_NORMAL   },
 	{ TEGRA_PINGROUP_UCA,   TEGRA_MUX_UARTC,         TEGRA_PUPD_PULL_UP,   TEGRA_TRI_NORMAL   },
 	{ TEGRA_PINGROUP_UCB,   TEGRA_MUX_UARTC,         TEGRA_PUPD_PULL_UP,   TEGRA_TRI_NORMAL   },
 	{ TEGRA_PINGROUP_UDA,   TEGRA_MUX_ULPI,          TEGRA_PUPD_NORMAL,    TEGRA_TRI_TRISTATE },
@@ -161,7 +160,6 @@ static struct tegra_pingroup_config tamonten_pinmux[] __initdata = {
 static struct tegra_gpio_table gpio_table[] = {
 	{ .gpio = COM_GPIO_SD_CD,		.enable = true },
 	{ .gpio = COM_GPIO_SD_WP,		.enable = true },
-	{ .gpio = COM_GPIO_SD_POWER,		.enable = true },
 	{ .gpio = COM_GPIO_CDC_IRQ,		.enable = true },
 	{ .gpio = COM_GPIO_HP_DET,		.enable = true },
 	{ .gpio = COM_GPIO_EXT_MIC_EN,		.enable = true },

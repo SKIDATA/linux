@@ -41,11 +41,6 @@ static struct tegra_asoc_platform_data tamonten_audio_pdata = {
 	.i2s_param[BASEBAND] = {
 		.audio_port_id = -1,
 	},
-	.i2s_param[BT_SCO] = {
-		.audio_port_id = 3,
-		.is_i2s_master = 1,
-		.i2s_mode = TEGRA_DAIFMT_DSP_A,
-	},
 };
 
 static struct platform_device tamonten_audio_device = {
@@ -60,7 +55,7 @@ static struct wm8903_platform_data tamonten_wm8903_pdata = {
 	.irq_active_low = 0,
 	.micdet_cfg = 0,
 	.micdet_delay = 100,
-	.gpio_base = BOARD_GPIO_WM8903(0),
+	.gpio_base = BOARD_WM8903_GPIO_BASE,
 	.gpio_cfg = {
 		WM8903_GPn_FN_DMIC_LR_CLK_OUTPUT << WM8903_GP1_FN_SHIFT,
 		WM8903_GPn_FN_DMIC_LR_CLK_OUTPUT << WM8903_GP2_FN_SHIFT |
@@ -74,11 +69,12 @@ static struct wm8903_platform_data tamonten_wm8903_pdata = {
 static struct i2c_board_info __initdata wm8903_board_info = {
 	I2C_BOARD_INFO("wm8903", 0x1a),
 	.platform_data = &tamonten_wm8903_pdata,
-	.irq = TEGRA_GPIO_TO_IRQ(COM_GPIO_CDC_IRQ),
+	.irq = COM_GPIO_TO_IRQ(COM_GPIO_CDC_IRQ),
 };
 
 void __init tamonten_wm8903_init(void)
 {
-	i2c_register_board_info(0, &wm8903_board_info, 1);
+	i2c_register_board_info(COM_I2C_BUS_GEN1,
+				&wm8903_board_info, 1);
 	platform_device_register(&tamonten_audio_device);
 }

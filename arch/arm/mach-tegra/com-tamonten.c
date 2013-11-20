@@ -51,7 +51,6 @@
 #include "com-tamonten.h"
 #include "clock.h"
 #include "devices.h"
-#include "gpio-names.h"
 #include "pm.h"
 
 #define TAMONTEN_GPIO_TEMP_ALERT	TEGRA_GPIO_PN6
@@ -151,7 +150,7 @@ static struct platform_device tegra_nand_device = {
 };
 
 static struct tegra_i2c_platform_data tamonten_i2c1_platform_data = {
-	.adapter_nr = 0,
+	.adapter_nr = COM_I2C_BUS_GEN1,
 	.bus_count = 1,
 	/* On plutux .bus_clk_rate = { 400000, 0 } but why this is
 	   different doesn't show in the history. */
@@ -169,7 +168,7 @@ static const struct tegra_pingroup_config i2c2_gen2 = {
 };
 
 static struct tegra_i2c_platform_data tamonten_i2c2_platform_data = {
-	.adapter_nr = 1,
+	.adapter_nr = COM_I2C_BUS_DDC,
 	.bus_count = 2,
 	.bus_clk_rate = { 100000, 100000 },
 	.bus_mux = { &i2c2_ddc, &i2c2_gen2 },
@@ -177,13 +176,13 @@ static struct tegra_i2c_platform_data tamonten_i2c2_platform_data = {
 };
 
 static struct tegra_i2c_platform_data tamonten_i2c3_platform_data = {
-	.adapter_nr = 3,
+	.adapter_nr = COM_I2C_BUS_CAM,
 	.bus_count = 1,
 	.bus_clk_rate = { 400000, 0 },
 };
 
 static struct tegra_i2c_platform_data tamonten_dvc_platform_data = {
-	.adapter_nr = 4,
+	.adapter_nr = COM_I2C_BUS_PWR,
 	.bus_count = 1,
 	.bus_clk_rate = { 400000, 0 },
 	.is_dvc = true,
@@ -220,6 +219,7 @@ static void __init tamonten_i2c_init(void)
 				ARRAY_SIZE(tamonten_dvc_board_info));
 }
 
+#ifdef CONFIG_COM_TAMONTEN_UARTC
 static struct plat_serial8250_port uart3_platform_data[] = {
 	{
 		.membase	= IO_ADDRESS(TEGRA_UARTC_BASE),
@@ -237,12 +237,14 @@ static struct plat_serial8250_port uart3_platform_data[] = {
 
 static struct platform_device uart3_device = {
 	.name = "serial8250",
-	.id = PLAT8250_DEV_PLATFORM1,
+	.id = CONFIG_COM_TAMONTEN_UARTC_ID,
 	.dev = {
 		.platform_data = uart3_platform_data,
 	},
 };
+#endif
 
+#ifdef CONFIG_COM_TAMONTEN_UARTB
 static struct plat_serial8250_port uart2_platform_data[] = {
 	{
 		.membase  = IO_ADDRESS(TEGRA_UARTB_BASE),
@@ -260,16 +262,49 @@ static struct plat_serial8250_port uart2_platform_data[] = {
 
 static struct platform_device uart2_device = {
 	.name = "serial8250",
-	.id = PLAT8250_DEV_PLATFORM2,
+	.id = CONFIG_COM_TAMONTEN_UARTB_ID,
 	.dev = {
 		.platform_data = uart2_platform_data,
 	},
 };
+#endif
+
+#ifdef CONFIG_COM_TAMONTEN_UARTA
+static struct plat_serial8250_port uart1_platform_data[] = {
+	{
+		.membase  = IO_ADDRESS(TEGRA_UARTA_BASE),
+		.mapbase  = TEGRA_UARTA_BASE,
+		.irq      = INT_UARTA,
+		.flags    = UPF_BOOT_AUTOCONF | UPF_FIXED_TYPE,
+		.type     = PORT_TEGRA,
+		.iotype   = UPIO_MEM,
+		.regshift = 2,
+		.uartclk  = 216000000,
+	}, {
+		.flags    = 0,
+	},
+};
+
+static struct platform_device uart1_device = {
+	.name = "serial8250",
+	.id = CONFIG_COM_TAMONTEN_UARTA_ID,
+	.dev = {
+		.platform_data = uart1_platform_data,
+	},
+};
+#endif
 
 static struct platform_device *tamonten_uart_devices[] __initdata = {
 	&tegra_uartd_device,
+#ifdef CONFIG_COM_TAMONTEN_UARTC
 	&uart3_device,
+#endif
+#ifdef CONFIG_COM_TAMONTEN_UARTB
 	&uart2_device,
+#endif
+#ifdef CONFIG_COM_TAMONTEN_UARTA
+	&uart1_device,
+#endif
 };
 
 static struct uart_clk_parent uart_parent_clk[] __initdata = {
@@ -370,8 +405,8 @@ void __init tamonten_fixup(struct machine_desc *desc,
 
 static __initdata struct tegra_clk_init_table tamonten_clk_init_table[] = {
 	/* name		parent		rate		enabled */
-	{ "uarta",	"pll_p",	216000000,	false },
-	{ "uartb",	"pll_p",	216000000,	false },
+	{ "uarta",	"pll_p",	216000000,	true  },
+	{ "uartb",	"pll_p",	216000000,	true  },
 	{ "uartc",	"pll_p",	216000000,	true  },
 	{ "uartd",	"pll_p",	216000000,	true  },
 	{ "uarte",	"pll_p",	216000000,	false },
@@ -386,7 +421,7 @@ static __initdata struct tegra_clk_init_table tamonten_clk_init_table[] = {
 static struct tegra_sdhci_platform_data sdhci_pdata4 = {
 	.cd_gpio = COM_GPIO_SD_CD,
 	.wp_gpio = COM_GPIO_SD_WP,
-	.power_gpio = COM_GPIO_SD_POWER,
+	.power_gpio = -1,
 	.is_8bit = 1,
 };
 

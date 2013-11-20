@@ -25,7 +25,6 @@
 #include <mach/fb.h>
 
 #include "devices.h"
-#include "gpio-names.h"
 #include "board.h"
 #include "com-tamonten.h"
 
@@ -80,8 +79,11 @@ static struct tegra_fb_data tamonten_hdmi_fb_data = {
 static struct tegra_dc_out tamonten_hdmi_disp_out = {
 	.type		= TEGRA_DC_OUT_HDMI,
 	.flags		= TEGRA_DC_OUT_HOTPLUG_HIGH,
+#ifdef CONFIG_COM_TAMONTEN_NG
+	.parent_clk	= "pll_d2_out0",
+#endif
 
-	.dcc_bus	= 1,
+	.dcc_bus	= COM_I2C_BUS_DDC,
 	.hotplug_gpio	= COM_GPIO_HDMI_HPD,
 
 	.align		= TEGRA_DC_ALIGN_MSB,

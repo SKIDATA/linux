@@ -101,7 +101,7 @@ static struct regulator_consumer_supply vdd_1v5_consumer_supply[] = {
 
 static struct regulator_init_data vdd_1v5_initdata = {
 	.consumer_supplies = vdd_1v5_consumer_supply,
-	.num_consumer_supplies = 1,
+	.num_consumer_supplies = ARRAY_SIZE(vdd_1v5_consumer_supply),
 	.constraints = {
 		.valid_ops_mask = REGULATOR_CHANGE_STATUS,
 		.always_on = 0,
@@ -125,7 +125,7 @@ static struct regulator_consumer_supply vdd_1v2_consumer_supply[] = {
 
 static struct regulator_init_data vdd_1v2_initdata = {
 	.consumer_supplies = vdd_1v2_consumer_supply,
-	.num_consumer_supplies = 1,
+	.num_consumer_supplies = ARRAY_SIZE(vdd_1v2_consumer_supply),
 	.constraints = {
 		.valid_ops_mask = REGULATOR_CHANGE_STATUS,
 		.always_on = 1,
@@ -149,7 +149,7 @@ static struct regulator_consumer_supply vdd_1v05_consumer_supply[] = {
 
 static struct regulator_init_data vdd_1v05_initdata = {
 	.consumer_supplies = vdd_1v05_consumer_supply,
-	.num_consumer_supplies = 1,
+	.num_consumer_supplies = ARRAY_SIZE(vdd_1v05_consumer_supply),
 	.constraints = {
 		.valid_ops_mask = REGULATOR_CHANGE_STATUS,
 		.always_on = 1,
@@ -173,7 +173,7 @@ static struct regulator_consumer_supply vdd_1v05_mode_consumer_supply[] = {
 
 static struct regulator_init_data vdd_1v05_mode_initdata = {
 	.consumer_supplies = vdd_1v05_mode_consumer_supply,
-	.num_consumer_supplies = 1,
+	.num_consumer_supplies = ARRAY_SIZE(vdd_1v05_mode_consumer_supply),
 	.constraints = {
 		.valid_ops_mask = REGULATOR_CHANGE_STATUS,
 		.always_on = 1,
@@ -254,10 +254,10 @@ static struct tps6586x_subdev_info tps_devs[] = {
 };
 
 static struct tps6586x_platform_data tps_platform = {
-	.irq_base = TEGRA_NR_IRQS,
+	.irq_base = TAMONTEN_PMU_IRQ(0),
 	.num_subdevs = ARRAY_SIZE(tps_devs),
 	.subdevs = tps_devs,
-	.gpio_base = TAMONTEN_GPIO_TPS6586X(0),
+	.gpio_base = TAMONTEN_PMU_GPIO(0),
 	.use_power_off = true,
 };
 
@@ -315,7 +315,7 @@ int __init tamonten_regulator_init(void)
 	pmc_ctrl = readl(pmc + PMC_CTRL);
 	writel(pmc_ctrl | PMC_CTRL_INTR_LOW, pmc + PMC_CTRL);
 
-	i2c_register_board_info(4, tamonten_regulators, 1);
+	i2c_register_board_info(COM_I2C_BUS_PWR, tamonten_regulators, 1);
 
 	return 0;
 }

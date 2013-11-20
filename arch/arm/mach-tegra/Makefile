@@ -179,13 +179,6 @@ endif
 obj-${CONFIG_MACH_CARDHU}               += board-cardhu-memory.o
 obj-${CONFIG_MACH_CARDHU}               += board-cardhu-powermon.o
 
-obj-${CONFIG_MACH_TEC_NG}               += board-tec-ng.o
-obj-${CONFIG_MACH_TEC_NG}               += board-tec-ng-panel.o
-obj-${CONFIG_MACH_TEC_NG}               += board-tec-ng-pinmux.o
-obj-${CONFIG_MACH_TEC_NG}               += board-tec-ng-power.o
-obj-${CONFIG_MACH_TEC_NG}               += board-tec-ng-sdhci.o
-obj-${CONFIG_MACH_TEC_NG}               += board-tec-ng-sensors.o
-
 obj-${CONFIG_MACH_KAI}                  += board-touch-kai-synaptics-spi.o
 obj-y                                   += board-touch-raydium_spi.o
 
@@ -231,12 +224,13 @@ obj-$(CONFIG_COM_TAMONTEN)              += com-tamonten.o
 obj-$(CONFIG_COM_TAMONTEN)              += com-tamonten-pinmux.o
 obj-$(CONFIG_COM_TAMONTEN)              += com-tamonten-power.o
 obj-$(CONFIG_COM_TAMONTEN)              += com-tamonten-pcie.o
-obj-$(CONFIG_COM_TAMONTEN)              += com-tamonten-display.o
 
+obj-$(CONFIG_COM_TAMONTEN_DISPLAY)      += com-tamonten-display.o
 obj-$(CONFIG_COM_TAMONTEN_LVDS)         += com-tamonten-lvds.o
 obj-$(CONFIG_COM_TAMONTEN_HDMI)         += com-tamonten-hdmi.o
 
 obj-$(CONFIG_TAMONTEN_WM8903)           += tamonten-wm8903.o
+obj-$(CONFIG_TAMONTEN_ADNP)             += tamonten-adnp.o
 obj-$(CONFIG_TAMONTEN_TSC2007)          += tamonten-tsc2007.o
 
 obj-$(CONFIG_MACH_MEDCOM_WIDE)          += board-medcom-wide.o
@@ -249,3 +243,13 @@ obj-$(CONFIG_MACH_PLUTUX)               += board-plutux.o
 obj-$(CONFIG_MACH_PLUTUX)               += board-plutux-hdmi.o
 
 obj-$(CONFIG_MACH_SKIDATA_CARRIER)      += board-skidata-carrier.o
+
+obj-$(CONFIG_COM_TAMONTEN_NG)           += com-tamonten-ng.o
+obj-$(CONFIG_COM_TAMONTEN_NG)           += com-tamonten-ng-pinmux.o
+obj-$(CONFIG_COM_TAMONTEN_NG)           += com-tamonten-ng-power.o
+obj-$(CONFIG_COM_TAMONTEN_NG)           += com-tamonten-ng-sdhci.o
+obj-$(CONFIG_COM_TAMONTEN_NG)           += com-tamonten-ng-sensors.o
+obj-$(CONFIG_COM_TAMONTEN_NG)           += com-tamonten-pcie.o
+
+obj-${CONFIG_MACH_TEC_NG}               += board-tec-ng.o
+obj-${CONFIG_MACH_TEC_NG}               += board-tec-ng-panel.o

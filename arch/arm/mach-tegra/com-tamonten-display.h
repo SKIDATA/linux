@@ -1,7 +1,6 @@
 /*
- * arch/arm/mach-tegra/board-medcom-wide.h
+ * arch/arm/mach-tegra/com-tamonten-display.h
  *
- * Copyright (C) 2010 Google, Inc.
  * Copyright (C) 2013 Avionic Design GmbH
  *
  * This software is licensed under the terms of the GNU General Public
@@ -15,16 +14,16 @@
  *
  */
 
-#ifndef _MACH_TEGRA_BOARD_MEDCOM_WIDE_H
-#define _MACH_TEGRA_BOARD_MEDCOM_WIDE_H
+#ifndef _MACH_TEGRA_COM_TAMONTEN_DISPLAY_H
+#define _MACH_TEGRA_COM_TAMONTEN_DISPLAY_H
 
-#include "com-tamonten.h"
-#include "tamonten-wm8903.h"
-#include "tamonten-adnp.h"
+void tamonten_hdmi_init(void);
+extern struct tegra_dc_platform_data tamonten_hdmi_disp_pdata;
 
-#define MEDCOM_WIDE_GPIO_CPLD_IRQ	COM_GPIO_0
-#define MEDCOM_WIDE_IRQ_CPLD		COM_GPIO_TO_IRQ(MEDCOM_WIDE_GPIO_CPLD_IRQ)
+void tamonten_lvds_init(struct device *fb_device);
+extern struct tegra_dc_platform_data tamonten_lvds_disp_pdata;
 
-int medcom_wide_panel_init(void);
+int tamonten_display_init(struct tegra_dc_platform_data *disp1_pdata,
+			  struct tegra_dc_platform_data *disp2_pdata);
 
 #endif

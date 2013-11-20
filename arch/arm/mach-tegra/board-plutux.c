@@ -27,7 +27,6 @@
 
 #include "board.h"
 #include "board-plutux.h"
-#include "gpio-names.h"
 
 static void __init plutux_init(void)
 {
@@ -37,8 +36,13 @@ static void __init plutux_init(void)
 	plutux_hdmi_init();
 }
 
+static const char *plutux_dt_board_compat[] = {
+	"avionic-design,plutux",
+	NULL
+};
+
 MACHINE_START(PLUTUX, "plutux")
-	.boot_params    = 0x00000100,
+	.boot_params    = TAMONTEN_BOOT_PARAMS,
 	.fixup          = tamonten_fixup,
 	.map_io         = tegra_map_common_io,
 	.reserve        = tamonten_reserve,
@@ -46,4 +50,5 @@ MACHINE_START(PLUTUX, "plutux")
 	.init_irq       = tegra_init_irq,
 	.timer          = &tegra_timer,
 	.init_machine   = plutux_init,
+	.dt_compat      = plutux_dt_board_compat,
 MACHINE_END

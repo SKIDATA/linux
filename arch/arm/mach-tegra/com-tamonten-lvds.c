@@ -25,7 +25,6 @@
 #include <mach/dc.h>
 
 #include "devices.h"
-#include "gpio-names.h"
 #include "com-tamonten.h"
 
 /* panel power on sequence timing */
@@ -58,7 +57,6 @@ static void tamonten_backlight_exit(struct device *dev)
 
 static int tamonten_backlight_notify(struct device *dev, int brightness)
 {
-	gpio_set_value(COM_GPIO_PANEL_ENABLE, !!brightness);
 	gpio_set_value(COM_GPIO_LVDS_SHUTDOWN, !!brightness);
 	gpio_set_value(COM_GPIO_BACKLIGHT_ENABLE, !!brightness);
 
@@ -71,7 +69,7 @@ static int tamonten_backlight_check_fb(struct device *dev, struct fb_info *info)
 }
 
 static struct platform_pwm_backlight_data tamonten_backlight_data = {
-	.pwm_id = 0,
+	.pwm_id = COM_PWM_BACKLIGHT,
 	.max_brightness = 255,
 	.dft_brightness = 224,
 	.pwm_period_ns = 5000000,
@@ -92,8 +90,6 @@ static struct platform_device tamonten_backlight_device = {
 
 static int tamonten_panel_enable(void)
 {
-	gpio_set_value(COM_GPIO_PANEL_ENABLE, 1);
-	mdelay(TAMONTEN_PANEL_TO_LVDS_MS);
 	gpio_set_value(COM_GPIO_LVDS_SHUTDOWN, 1);
 	mdelay(TAMONTEN_LVDS_TO_BACKLIGHT_MS);
 
@@ -103,7 +99,6 @@ static int tamonten_panel_enable(void)
 static int tamonten_panel_disable(void)
 {
 	gpio_set_value(COM_GPIO_LVDS_SHUTDOWN, 0);
-	gpio_set_value(COM_GPIO_PANEL_ENABLE, 0);
 
 	return 0;
 }
@@ -122,6 +117,10 @@ static struct tegra_dc_out tamonten_panel_disp_out = {
 	.modes = NULL,
 	.n_modes = 0,
 
+#ifdef CONFIG_COM_TAMONTEN_NG
+	.parent_clk = "pll_d_out0",
+	.parent_clk_backup = "pll_d2_out0",
+#endif
 };
 
 struct tegra_dc_platform_data tamonten_lvds_disp_pdata = {
@@ -132,12 +131,6 @@ struct tegra_dc_platform_data tamonten_lvds_disp_pdata = {
 
 void __init tamonten_lvds_init(struct device *fb_device)
 {
-	gpio_request(COM_GPIO_PANEL_ENABLE, "panel enable");
-	gpio_direction_output(COM_GPIO_PANEL_ENABLE, 1);
-
-	gpio_request(COM_GPIO_BACKLIGHT_VDD, "backlight VDD");
-	gpio_direction_output(COM_GPIO_BACKLIGHT_VDD, 1);
-
 	gpio_request(COM_GPIO_LVDS_SHUTDOWN, "LVDS shutdown");
 	gpio_direction_output(COM_GPIO_LVDS_SHUTDOWN, 1);
 
