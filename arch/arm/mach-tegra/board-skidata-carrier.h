@@ -20,11 +20,8 @@
 
 #include "com-tamonten.h"
 #include "tamonten-wm8903.h"
+#include "tamonten-adnp.h"
 #include "tamonten-tsc2007.h"
-
-#define ADNP_GPIO(_x_)			(BOARD_ADNP_GPIO_BASE + (_x_))
-#define ADNP_GPIO_TO_IRQ(_x_)		(BOARD_ADNP_IRQ_BASE + ((_x_) - ADNP_GPIO(0)))
-#define ADNP_IRQ(_x_)			ADNP_GPIO_TO_IRQ(ADNP_GPIO(_x_))
 
 #define SKIDATA_GPIO_CPLD_IRQ		COM_GPIO_0
 #define SKIDATA_GPIO_SERVICE		COM_GPIO_1

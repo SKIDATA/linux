@@ -47,22 +47,6 @@ static void __init skidata_gpio_init(void)
 	tegra_gpio_config(stc_com_gpio_table, ARRAY_SIZE(stc_com_gpio_table));
 }
 
-static struct adnp_platform_data stc_adnp_pdata = {
-	.gpio_base = ADNP_GPIO(0),
-	.nr_gpios = 64,
-	.irq_base = ADNP_GPIO_TO_IRQ(ADNP_GPIO(0)),
-	.names = NULL,
-};
-
-static struct i2c_board_info stc_i2c1_board_info[] __initdata = {
-	{
-		I2C_BOARD_INFO("gpio-adnp", 0x41),
-		.platform_data = &stc_adnp_pdata,
-		.irq = SKIDATA_IRQ_CPLD,
-	},
-};
-
-
 static struct i2c_board_info stc_i2c2_gen2_board_info[] __initdata = {
 	{
 		I2C_BOARD_INFO("fm24cl64b", 0x51),
@@ -74,10 +58,9 @@ static struct i2c_board_info stc_i2c2_gen2_board_info[] __initdata = {
 
 static void __init skidata_i2c_init(void)
 {
-	i2c_register_board_info(COM_I2C_BUS_GEN1, stc_i2c1_board_info,
-				ARRAY_SIZE(stc_i2c1_board_info));
 	i2c_register_board_info(COM_I2C_BUS_GEN2, stc_i2c2_gen2_board_info,
 				ARRAY_SIZE(stc_i2c2_gen2_board_info));
+	tamonten_adnp_init(COM_I2C_BUS_GEN1, SKIDATA_IRQ_CPLD);
 	tamonten_tsc2007_init(COM_I2C_BUS_GEN2, SKIDATA_GPIO_TOUCH_IRQ,
 			SKIDATA_IRQ_TOUCH);
 }
