@@ -74,11 +74,12 @@ static struct i2c_board_info stc_i2c2_gen2_board_info[] __initdata = {
 
 static void __init skidata_i2c_init(void)
 {
-	i2c_register_board_info(0, stc_i2c1_board_info,
+	i2c_register_board_info(COM_I2C_BUS_GEN1, stc_i2c1_board_info,
 				ARRAY_SIZE(stc_i2c1_board_info));
-	i2c_register_board_info(2, stc_i2c2_gen2_board_info,
+	i2c_register_board_info(COM_I2C_BUS_GEN2, stc_i2c2_gen2_board_info,
 				ARRAY_SIZE(stc_i2c2_gen2_board_info));
-	tamonten_tsc2007_init(2, SKIDATA_GPIO_TOUCH_IRQ, SKIDATA_IRQ_TOUCH);
+	tamonten_tsc2007_init(COM_I2C_BUS_GEN2, SKIDATA_GPIO_TOUCH_IRQ,
+			SKIDATA_IRQ_TOUCH);
 }
 
 static struct tegra_dc_mode skidata_lvds_modes[] = {
@@ -145,7 +146,7 @@ static struct i2c_board_info skidata_camera_bus_board_info[] = {
 
 static struct soc_camera_link skidata_camera_iclink = {
 	.bus_id = -1,
-	.i2c_adapter_id = 3,
+	.i2c_adapter_id = COM_I2C_BUS_CAM,
 	.board_info = skidata_camera_bus_board_info,
 	.priv = &mt9v126_pdata,
 };
