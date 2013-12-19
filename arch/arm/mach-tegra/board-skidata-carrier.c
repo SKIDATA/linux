@@ -152,7 +152,10 @@ static struct tegra_camera_platform_data skidata_camera_platform_data = {
 
 static void __init skidata_camera_init(void)
 {
-	gpio_request(SKIDATA_GPIO_CCD_nPWRDN, "ccd_npwrdn");
+	if (gpio_request(SKIDATA_GPIO_CCD_nPWRDN, "ccd_npwrdn")) {
+		pr_err("Failed to request CCD power down gpio\n");
+		return;
+	}
 	gpio_direction_output(SKIDATA_GPIO_CCD_nPWRDN, 0);
 
 	tegra_camera_device.dev.platform_data = &skidata_camera_platform_data;
