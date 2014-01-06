@@ -107,6 +107,15 @@ static int __init skidata_display_init(void)
 #ifdef CONFIG_VIDEO_TEGRA
 static int skidata_camera_enable(struct nvhost_device *ndev)
 {
+	static int gpio_requested;
+	if (!gpio_requested) {
+		int err = gpio_request(SKIDATA_GPIO_CCD_nPWRDN, "ccd_npwrdn");
+		if (err) {
+			pr_err("Failed to request CCD power down gpio\n");
+			return err;
+		}
+		gpio_requested = 1;
+	}
 	gpio_set_value_cansleep(SKIDATA_GPIO_CCD_nPWRDN, 1);
 	return 0;
 }
@@ -152,12 +161,6 @@ static struct tegra_camera_platform_data skidata_camera_platform_data = {
 
 static void __init skidata_camera_init(void)
 {
-	if (gpio_request(SKIDATA_GPIO_CCD_nPWRDN, "ccd_npwrdn")) {
-		pr_err("Failed to request CCD power down gpio\n");
-		return;
-	}
-	gpio_direction_output(SKIDATA_GPIO_CCD_nPWRDN, 0);
-
 	tegra_camera_device.dev.platform_data = &skidata_camera_platform_data;
 	nvhost_device_register(&tegra_camera_device);
 	platform_device_register(&skidata_soc_camera);
