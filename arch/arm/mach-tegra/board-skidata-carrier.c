@@ -19,6 +19,7 @@
 #include <linux/gpio.h>
 #include <linux/i2c.h>
 #include <linux/i2c/adnp.h>
+#include <linux/i2c/at24.h>
 #include <linux/regulator/machine.h>
 #include <linux/regulator/fixed.h>
 #include <linux/mt9v126.h>
@@ -47,9 +48,16 @@ static void __init skidata_gpio_init(void)
 	tegra_gpio_config(stc_com_gpio_table, ARRAY_SIZE(stc_com_gpio_table));
 }
 
+static struct at24_platform_data fram_pdata = {
+	.byte_len = 8192,
+	.page_size = 1,
+	.flags = AT24_FLAG_ADDR16,
+};
+
 static struct i2c_board_info stc_i2c2_gen2_board_info[] __initdata = {
 	{
-		I2C_BOARD_INFO("fm24cl64b", 0x51),
+		I2C_BOARD_INFO("at24", 0x51),
+		.platform_data = &fram_pdata,
 	},
 	{
 		I2C_BOARD_INFO("pcf8523", 0x68),
