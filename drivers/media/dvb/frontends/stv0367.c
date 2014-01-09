@@ -123,7 +123,7 @@ static struct st_register def0367ter[STV0367TER_NBREGS] = {
 	{R367TER_AGC1MIN,	0x00},
 	{R367TER_AGCR,		0xbc},
 	{R367TER_AGC2TH,	0x00},
-	{R367TER_AGC12C,	0x00},
+	{R367TER_AGC12C,	0x01},
 	{R367TER_AGCCTRL1,	0x85},
 	{R367TER_AGCCTRL2,	0x1f},
 	{R367TER_AGC1VAL1,	0x00},
@@ -139,7 +139,7 @@ static struct st_register def0367ter[STV0367TER_NBREGS] = {
 	{R367TER_INC_DEROT2,	0x55},
 	{R367TER_PPM_CPAMP_DIR,	0x2c},
 	{R367TER_PPM_CPAMP_INV,	0x00},
-	{R367TER_FREESTFE_1,	0x00},
+	{R367TER_FREESTFE_1,	0x03},
 	{R367TER_FREESTFE_2,	0x1c},
 	{R367TER_DCOFFSET,	0x00},
 	{R367TER_EN_PROCESS,	0x05},
@@ -584,7 +584,7 @@ static struct st_register def0367cab[STV0367CAB_NBREGS] = {
 	{R367CAB_DAC1R,		0x00},
 	{R367CAB_IOCFG2,	0x00},
 	{R367CAB_SDFR,		0x00},
-	{R367CAB_AUX_CLK,	0x00},
+	{R367CAB_AUX_CLK,	0x0a},
 	{R367CAB_FREESYS1,	0x00},
 	{R367CAB_FREESYS2,	0x00},
 	{R367CAB_FREESYS3,	0x00},
@@ -1470,6 +1470,25 @@ static void stv0367ter_set_ts_mode(struct stv0367_state *state,
 	}
 }
 
+static void stv0367ter_set_ts_swap(struct stv0367_state *state,
+					enum stv0367_ts_swap swap_ts)
+{
+
+	if (state == NULL)
+		return;
+
+	switch (swap_ts) {
+	default:
+		/*for removing warning :default we can assume in parallel mode*/
+	case STV0367_NO_SWAP:
+		stv0367_writebits(state, F367TER_TSFIFO_PERMDATA, 0);
+		break;
+	case STV0367_SWAP:
+		stv0367_writebits(state, F367TER_TSFIFO_PERMDATA, 1);
+		break;
+	}
+}
+
 static void stv0367ter_set_clk_pol(struct stv0367_state *state,
 					enum stv0367_clk_pol clock)
 {
@@ -1489,6 +1508,28 @@ static void stv0367ter_set_clk_pol(struct stv0367_state *state,
 		/*case FE_TER_CLOCK_POLARITY_DEFAULT:*/
 	default:
 		stv0367_writebits(state, F367TER_TS_BYTE_CLK_INV, 0);
+		break;
+	}
+}
+
+static void stv0367ter_set_adc_mode(struct stv0367_state *state,
+					enum stv0367_adc_voltage adc_mode)
+{
+	if (state == NULL)
+		return;
+
+	switch (adc_mode) {
+	case STV0367_ADC_10V:
+		stv0367_writebits(state, F367TER_INMODE0, 0x00);
+		stv0367_writebits(state, F367TER_INMODE1, 0x00);
+		break;
+	case STV0367_ADC_16V:
+		stv0367_writebits(state, F367TER_INMODE0, 0x01);
+		stv0367_writebits(state, F367TER_INMODE1, 0x00);
+		break;
+	case STV0367_ADC_20V:
+		stv0367_writebits(state, F367TER_INMODE0, 0x01);
+		stv0367_writebits(state, F367TER_INMODE1, 0x01);
 		break;
 	}
 }
@@ -1544,6 +1585,11 @@ int stv0367ter_init(struct dvb_frontend *fe)
 
 	switch (state->config->xtal) {
 		/*set internal freq to 53.125MHz */
+	case 16000000:
+		stv0367_writereg(state, R367TER_PLLMDIV, 0x08);
+		stv0367_writereg(state, R367TER_PLLNDIV, 0x6c);
+		stv0367_writereg(state, R367TER_PLLSETUP, 0x18);
+		break;
 	case 25000000:
 		stv0367_writereg(state, R367TER_PLLMDIV, 0xa);
 		stv0367_writereg(state, R367TER_PLLNDIV, 0x55);
@@ -1568,7 +1614,9 @@ int stv0367ter_init(struct dvb_frontend *fe)
 
 	/*Set TS1 and TS2 to serial or parallel mode */
 	stv0367ter_set_ts_mode(state, state->config->ts_mode);
+	stv0367ter_set_ts_swap(state, state->config->ts_swap);
 	stv0367ter_set_clk_pol(state, state->config->clk_pol);
+	stv0367ter_set_adc_mode(state, state->config->adc_mode);
 
 	state->chip_id = stv0367_readreg(state, R367TER_ID);
 	ter_state->first_lock = 0;
@@ -2780,10 +2828,52 @@ int stv0367cab_init(struct dvb_frontend *fe)
 		stv0367_writereg(state, def0367cab[i].addr,
 						def0367cab[i].value);
 
+	switch (state->config->xtal) {
+		/*set internal freq to 53.125MHz */
+	case 16000000:
+		printk("FE_STV0367TER_SetCLKgen for 16Mhz\n");
+		stv0367_writereg(state, R367CAB_PLLMDIV, 0x08);
+		stv0367_writereg(state, R367CAB_PLLNDIV, 0x70);
+		stv0367_writereg(state, R367CAB_PLLSETUP, 0x18);
+		break;
+	case 25000000:
+		stv0367_writereg(state, R367CAB_PLLMDIV, 0xa);
+		stv0367_writereg(state, R367CAB_PLLNDIV, 0x55);
+		stv0367_writereg(state, R367CAB_PLLSETUP, 0x18);
+		break;
+	default:
+	case 27000000:
+		dprintk("FE_STV0367TER_SetCLKgen for 27Mhz\n");
+		stv0367_writereg(state, R367CAB_PLLMDIV, 0x1);
+		stv0367_writereg(state, R367CAB_PLLNDIV, 0x8);
+		stv0367_writereg(state, R367CAB_PLLSETUP, 0x18);
+		break;
+	case 30000000:
+		stv0367_writereg(state, R367CAB_PLLMDIV, 0xc);
+		stv0367_writereg(state, R367CAB_PLLNDIV, 0x55);
+		stv0367_writereg(state, R367CAB_PLLSETUP, 0x18);
+		break;
+	}
+
+	switch (state->config->adc_mode) {
+	case STV0367_ADC_10V:
+		stv0367_writebits(state, F367CAB_INMODE0, 0x00);
+		stv0367_writebits(state, F367CAB_INMODE1, 0x00);
+		break;
+	case STV0367_ADC_16V:
+		stv0367_writebits(state, F367CAB_INMODE0, 0x01);
+		stv0367_writebits(state, F367CAB_INMODE1, 0x00);
+		break;
+	case STV0367_ADC_20V:
+		stv0367_writebits(state, F367CAB_INMODE0, 0x01);
+		stv0367_writebits(state, F367CAB_INMODE1, 0x01);
+		break;
+	}
+
 	switch (state->config->ts_mode) {
 	case STV0367_DVBCI_CLOCK:
 		dprintk("Setting TSMode = STV0367_DVBCI_CLOCK\n");
-		stv0367_writebits(state, F367CAB_OUTFORMAT, 0x03);
+		stv0367_writebits(state, F367CAB_OUTFORMAT, 0x02);
 		break;
 	case STV0367_SERIAL_PUNCT_CLOCK:
 	case STV0367_SERIAL_CONT_CLOCK:
@@ -2807,9 +2897,16 @@ int stv0367cab_init(struct dvb_frontend *fe)
 
 	stv0367_writebits(state, F367CAB_SYNC_STRIP, 0x00);
 
-	stv0367_writebits(state, F367CAB_CT_NBST, 0x01);
+	stv0367_writebits(state, F367CAB_CT_NBST, 0x00);
 
-	stv0367_writebits(state, F367CAB_TS_SWAP, 0x01);
+	switch (state->config->ts_swap) {
+	case STV0367_SWAP:
+		stv0367_writebits(state, F367CAB_TS_SWAP, 0x01);
+		break;
+	case STV0367_NO_SWAP:
+		stv0367_writebits(state, F367CAB_TS_SWAP, 0x00);
+		break;
+	}
 
 	stv0367_writebits(state, F367CAB_FIFO_BYPASS, 0x00);
 
