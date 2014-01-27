@@ -64,11 +64,16 @@ static struct i2c_board_info stc_i2c2_gen2_board_info[] __initdata = {
 	},
 };
 
+static u32 stc_platform_id[] = {
+	0xFDF,
+};
+
 static void __init skidata_i2c_init(void)
 {
 	i2c_register_board_info(COM_I2C_BUS_GEN2, stc_i2c2_gen2_board_info,
 				ARRAY_SIZE(stc_i2c2_gen2_board_info));
-	tamonten_adnp_init(COM_I2C_BUS_GEN1, SKIDATA_IRQ_CPLD);
+	tamonten_adnp_init(COM_I2C_BUS_GEN1, SKIDATA_IRQ_CPLD,
+			stc_platform_id, ARRAY_SIZE(stc_platform_id));
 	tamonten_tsc2007_init(COM_I2C_BUS_GEN2, SKIDATA_GPIO_TOUCH_IRQ,
 			SKIDATA_IRQ_TOUCH);
 }
