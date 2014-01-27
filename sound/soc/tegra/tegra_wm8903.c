@@ -599,8 +599,10 @@ static const struct snd_soc_dapm_widget tec_ng_dapm_widgets[] = {
 
 static const struct snd_soc_dapm_widget skidata_carrier_dapm_widgets[] = {
 	SND_SOC_DAPM_SPK("Int Spk", tegra_wm8903_event_int_spk),
-	SND_SOC_DAPM_HP("Headphone Jack", tegra_wm8903_event_hp),
+	SND_SOC_DAPM_LINE("LineOut", NULL),
+	SND_SOC_DAPM_MIC("Mic Jack", NULL),
 	SND_SOC_DAPM_MIC("Digital Mic", NULL),
+	SND_SOC_DAPM_LINE("Line In", NULL),
 };
 
 static const struct snd_soc_dapm_widget tegra_wm8903_default_dapm_widgets[] = {
@@ -722,10 +724,15 @@ static const struct snd_soc_dapm_route tec_ng_audio_map[] = {
 };
 
 static const struct snd_soc_dapm_route skidata_carrier_audio_map[] = {
+	{"LineOut", NULL, "LINEOUTL"},
+	{"LineOut", NULL, "LINEOUTR"},
 	{"Int Spk", NULL, "ROP"},
 	{"Int Spk", NULL, "RON"},
 	{"Int Spk", NULL, "LOP"},
 	{"Int Spk", NULL, "LON"},
+	{"Mic Bias", NULL, "Mic Jack"},
+	{"IN2R", NULL, "Mic Bias"},
+	{"IN3R", NULL, "Line In"},
 	{"DMICDAT", NULL, "Digital Mic"},
 };
 
@@ -757,6 +764,13 @@ static const struct snd_kcontrol_new tec_ng_controls[] = {
 	SOC_DAPM_PIN_SWITCH("Headphone Jack"),
 	SOC_DAPM_PIN_SWITCH("Mic Jack"),
 	SOC_DAPM_PIN_SWITCH("Int Mic"),
+	SOC_DAPM_PIN_SWITCH("Line In"),
+};
+
+static const struct snd_kcontrol_new skidata_carrier_controls[] = {
+	SOC_DAPM_PIN_SWITCH("Int Spk"),
+	SOC_DAPM_PIN_SWITCH("LineOut"),
+	SOC_DAPM_PIN_SWITCH("Mic Jack"),
 	SOC_DAPM_PIN_SWITCH("Line In"),
 };
 
@@ -870,12 +884,13 @@ static int tegra_wm8903_init(struct snd_soc_pcm_runtime *rtd)
 	if (!machine_is_medcom_wide() && !machine_is_plutux())
 		snd_soc_dapm_nc_pin(dapm, "IN2L");
 	if (!machine_is_kaen() && !machine_is_tec_ng() &&
-	    !machine_is_medcom_wide() && !machine_is_plutux())
+	    !machine_is_medcom_wide() && !machine_is_plutux() &&
+	    !machine_is_skidata_carrier())
 		snd_soc_dapm_nc_pin(dapm, "IN2R");
 	if (!machine_is_medcom_wide() && !machine_is_plutux())
 		snd_soc_dapm_nc_pin(dapm, "IN3L");
 	if (!machine_is_medcom_wide() && !machine_is_plutux() &&
-	    !machine_is_tec_ng())
+	    !machine_is_tec_ng() && !machine_is_skidata_carrier())
 		snd_soc_dapm_nc_pin(dapm, "IN3R");
 
 	if (machine_is_aebl()) {
@@ -884,7 +899,7 @@ static int tegra_wm8903_init(struct snd_soc_pcm_runtime *rtd)
 		snd_soc_dapm_nc_pin(dapm, "ROP");
 		snd_soc_dapm_nc_pin(dapm, "LOP");
 	} else if (!machine_is_medcom_wide() && !machine_is_plutux() &&
-		   !machine_is_tec_ng()) {
+		   !machine_is_tec_ng() && !machine_is_skidata_carrier()) {
 		snd_soc_dapm_nc_pin(dapm, "LINEOUTR");
 		snd_soc_dapm_nc_pin(dapm, "LINEOUTL");
 	}
@@ -1081,8 +1096,8 @@ static __devinit int tegra_wm8903_driver_probe(struct platform_device *pdev)
 		card->dapm_widgets = tec_ng_dapm_widgets;
 		card->num_dapm_widgets = ARRAY_SIZE(tec_ng_dapm_widgets);
 	} else if (machine_is_skidata_carrier()) {
-		card->controls = tegra_wm8903_default_controls;
-		card->num_controls = ARRAY_SIZE(tegra_wm8903_default_controls);
+		card->controls = skidata_carrier_controls;
+		card->num_controls = ARRAY_SIZE(skidata_carrier_controls);
 
 		card->dapm_widgets = skidata_carrier_dapm_widgets;
 		card->num_dapm_widgets = ARRAY_SIZE(skidata_carrier_dapm_widgets);
