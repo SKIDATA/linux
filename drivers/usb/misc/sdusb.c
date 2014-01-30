@@ -42,6 +42,7 @@ static struct usb_device_id sdusb_table [] = {
 	{ USB_DEVICE(0x1411, 0x001E) }, /* sd832 barrier 2010 */
 	{ USB_DEVICE(0x1411, 0x0023) }, /* sd849 IO Controller Power.Gate Basic */
 	{ USB_DEVICE(0x1411, 0x0027) }, /* sd866 IO Controller Power.Gate Full */
+	{ USB_DEVICE(0x1411, 0x0028) }, /* sd871 Plug-In Card Reader */
 	{ }					/* Terminating entry */
 };
 MODULE_DEVICE_TABLE (usb, sdusb_table);
