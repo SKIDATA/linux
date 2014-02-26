@@ -283,6 +283,8 @@ static irqreturn_t sx8634_irq(int irq, void *data)
 		return IRQ_NONE;
 	}
 
+	pending = err;
+
 	if (pending & I2C_IRQ_SRC_GPI)
 		dev_dbg(&sx->client->dev, "GPI event\n");
 
@@ -295,7 +297,7 @@ static irqreturn_t sx8634_irq(int irq, void *data)
 	if (pending & I2C_IRQ_SRC_READY)
 		dev_dbg(&sx->client->dev, "ready event\n");
 
-	blocking_notifier_call_chain(&sx->irq_notifier, err, sx);
+	blocking_notifier_call_chain(&sx->irq_notifier, pending, sx);
 
 	sx8634_unlock(sx);
 
@@ -490,6 +492,9 @@ static int __devexit sx8634_i2c_remove(struct i2c_client *client)
 		gpio_direction_output(sx->reset_gpio, 0);
 		gpio_free(sx->reset_gpio);
 	}
+
+	free_irq(client->irq, sx);
+	mfd_remove_devices(&client->dev);
 
 	return 0;
 }
