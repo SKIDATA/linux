@@ -167,8 +167,16 @@ static struct platform_device skidata_soc_camera = {
 static struct tegra_camera_platform_data skidata_camera_platform_data = {
 	.enable_camera = skidata_camera_enable,
 	.disable_camera = skidata_camera_disable,
+#ifdef CONFIG_MACH_SKIDATA_CARRIER_CAMERA_FLIP_V
+	.flip_v = 1,
+#else
 	.flip_v = 0,
+#endif
+#ifdef CONFIG_MACH_SKIDATA_CARRIER_CAMERA_FLIP_H
+	.flip_h = 1,
+#else
 	.flip_h = 0,
+#endif
 	.port = TEGRA_CAMERA_PORT_VIP,
 };
 

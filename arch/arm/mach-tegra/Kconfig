@@ -350,6 +350,14 @@ config MACH_SKIDATA_CARRIER
 	help
 	  Support the SkiData platform based on Avionic Design GmbH Tamonten
 
+config MACH_SKIDATA_CARRIER_CAMERA_FLIP_H
+	bool "Flip the camera image horizontally"
+	depends on MACH_SKIDATA_CARRIER
+
+config MACH_SKIDATA_CARRIER_CAMERA_FLIP_V
+	bool "Flip the camera image vertically"
+	depends on MACH_SKIDATA_CARRIER
+
 config MACH_TEC_NG
 	bool "Tamonten Evaluation Carrier NG (TEC-NG) Board"
 	depends on COM_TAMONTEN || COM_TAMONTEN_NG
