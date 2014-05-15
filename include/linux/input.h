@@ -678,6 +678,45 @@ struct input_keymap_entry {
 #define KEY_CAMERA_LEFT		0x219
 #define KEY_CAMERA_RIGHT	0x21a
 
+#define KEY_ATTENDANT_ON	0x21b
+#define KEY_ATTENDANT_OFF	0x21c
+#define KEY_ATTENDANT_TOGGLE	0x21d /* Attendant call on or off */
+#define KEY_LIGHTS_TOGGLE	0x21e /* Reading light on or off */
+
+#define BTN_DPAD_UP		0x220
+#define BTN_DPAD_DOWN		0x221
+#define BTN_DPAD_LEFT		0x222
+#define BTN_DPAD_RIGHT		0x223
+
+#define KEY_ALS_TOGGLE		0x230 /* Ambient light sensor */
+
+#define KEY_PHONE_DROP		0x240
+#define KEY_PHONE_SEND		0x241
+
+#define KEY_PHONE_SPEED_DIAL	0x250
+#define KEY_PHONE_SPEED_DIAL1	0x250
+#define KEY_PHONE_SPEED_DIAL2	0x251
+#define KEY_PHONE_SPEED_DIAL3	0x252
+#define KEY_PHONE_SPEED_DIAL4	0x253
+#define KEY_PHONE_SPEED_DIAL5	0x254
+#define KEY_PHONE_SPEED_DIAL6	0x255
+#define KEY_PHONE_SPEED_DIAL7	0x256
+#define KEY_PHONE_SPEED_DIAL8	0x257
+#define KEY_PHONE_SPEED_DIAL9	0x258
+
+#define KEY_PHONE_STORE_NUMBER	0x260
+#define KEY_PHONE_STORE_NUMBER1	0x260
+#define KEY_PHONE_STORE_NUMBER2	0x261
+#define KEY_PHONE_STORE_NUMBER3	0x262
+#define KEY_PHONE_STORE_NUMBER4	0x263
+#define KEY_PHONE_STORE_NUMBER5	0x264
+#define KEY_PHONE_STORE_NUMBER6	0x265
+#define KEY_PHONE_STORE_NUMBER7	0x266
+#define KEY_PHONE_STORE_NUMBER8	0x267
+#define KEY_PHONE_STORE_NUMBER9	0x268
+
+#define KEY_MEDICAL_ALARM	0x270
+
 #define BTN_TRIGGER_HAPPY		0x2c0
 #define BTN_TRIGGER_HAPPY1		0x2c0
 #define BTN_TRIGGER_HAPPY2		0x2c1
@@ -739,6 +778,7 @@ struct input_keymap_entry {
 #define REL_DIAL		0x07
 #define REL_WHEEL		0x08
 #define REL_MISC		0x09
+#define REL_ROOM_TEMPERATURE	0x0a
 #define REL_MAX			0x0f
 #define REL_CNT			(REL_MAX+1)
 
@@ -788,6 +828,8 @@ struct input_keymap_entry {
 #define ABS_MT_TRACKING_ID	0x39	/* Unique ID of initiated contact */
 #define ABS_MT_PRESSURE		0x3a	/* Pressure on contact area */
 #define ABS_MT_DISTANCE		0x3b	/* Contact hover distance */
+#define ABS_MT_TOOL_X		0x3c /* Center X tool position */
+#define ABS_MT_TOOL_Y		0x3d /* Center Y tool position */
 
 #ifdef __KERNEL__
 /* Implementation details, userspace should not care about these */
@@ -817,6 +859,8 @@ struct input_keymap_entry {
 #define SW_KEYPAD_SLIDE		0x0a  /* set = keypad slide out */
 #define SW_FRONT_PROXIMITY	0x0b  /* set = front proximity sensor active */
 #define SW_ROTATE_LOCK		0x0c  /* set = rotate locked/disabled */
+#define SW_LINEIN_INSERT	0x0d /* set = inserted */
+#define SW_MUTE_DEVICE		0x0e /* set = device disabled */
 #define SW_MAX			0x0f
 #define SW_CNT			(SW_MAX+1)
 
@@ -829,6 +873,7 @@ struct input_keymap_entry {
 #define MSC_GESTURE		0x02
 #define MSC_RAW			0x03
 #define MSC_SCAN		0x04
+#define MSC_TIMESTAMP		0x05
 #define MSC_MAX			0x07
 #define MSC_CNT			(MSC_MAX+1)
 
