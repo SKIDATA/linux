@@ -565,7 +565,7 @@ static int adt7461_init_client(struct i2c_client *client)
 {
 	struct adt7461_data *data = i2c_get_clientdata(client);
 	struct adt7461_platform_data *pdata = client->dev.platform_data;
-	u8 config = 0;
+	u8 config = STANDBY_BIT;
 	u8 value;
 	int err;
 
@@ -578,7 +578,7 @@ static int adt7461_init_client(struct i2c_client *client)
 		data->flags |= ADT7461_FLAG_THERM2;
 
 		if (gpio_is_valid(pdata->irq_gpio)) {
-			if (!IS_ERR(gpio_request(pdata->irq_gpio, "adt7461"))) {
+			if (gpio_request(pdata->irq_gpio, "adt7461") >= 0) {
 				gpio_direction_input(pdata->irq_gpio);
 				data->irq_gpio = pdata->irq_gpio;
 			}
@@ -639,10 +639,10 @@ static int adt7461_init_client(struct i2c_client *client)
 
 	if (data->flags & ADT7461_FLAG_THERM2) {
 		data->alarm_fn = pdata->alarm_fn;
-		config = (THERM2_BIT | STANDBY_BIT);
-	} else {
-		config = (~ALERT_BIT & ~THERM2_BIT & STANDBY_BIT);
+		config |= THERM2_BIT;
 	}
+	if (data->flags & ADT7461_FLAG_ADT7461_EXT)
+		config |= EXTENDED_RANGE_BIT;
 
 	err = i2c_smbus_write_byte_data(client, ADT7461_REG_W_CONFIG1, config);
 	if (err < 0)
