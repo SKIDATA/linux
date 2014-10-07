@@ -156,6 +156,33 @@ static int pcf8523_start_rtc(struct i2c_client *client)
 	return 0;
 }
 
+static int pcf8523_rtc_clear_time(struct device *dev)
+{
+	struct i2c_client *client = to_i2c_client(dev);
+	struct i2c_msg msg;
+	u8 regs[8];
+	int err;
+
+	err = pcf8523_stop_rtc(client);
+	if (err < 0)
+		return err;
+
+	memset(regs, 0x00, sizeof(regs));
+	regs[0] = REG_SECONDS;
+	regs[4] = bin2bcd(1); /* tm_mday has to be in range 1-31 */
+
+	msg.addr = client->addr;
+	msg.flags = 0;
+	msg.len = sizeof(regs);
+	msg.buf = regs;
+
+	err = i2c_transfer(client->adapter, &msg, 1);
+	if (err < 0)
+		return err;
+
+	return pcf8523_start_rtc(client);
+}
+
 static int pcf8523_rtc_read_time(struct device *dev, struct rtc_time *tm)
 {
 	struct i2c_client *client = to_i2c_client(dev);
@@ -186,6 +213,18 @@ static int pcf8523_rtc_read_time(struct device *dev, struct rtc_time *tm)
 		err = pcf8523_write(client, REG_SECONDS, regs[0]);
 		if (err < 0)
 			return err;
+
+		err = pcf8523_rtc_clear_time(dev);
+		if (err < 0) {
+			dev_err(dev, "rtc could not be cleared\n");
+			return err;
+		}
+
+		/* Clear read time values as they are probably invalid.
+		 * We do this instead of returning an error to ensure that
+		 * the system-clock is in sync with the RTCs zero time */
+		memset(regs, 0x00, sizeof(regs));
+		regs[3] = bin2bcd(1);
 	}
 
 	tm->tm_sec = bcd2bin(regs[0] & 0x7f);
