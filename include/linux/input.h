@@ -692,6 +692,8 @@ struct input_keymap_entry {
 
 #define KEY_PHONE_DROP		0x240
 #define KEY_PHONE_SEND		0x241
+#define KEY_PHONE_LINE		0x242
+#define KEY_PHONE_REDIAL	0x243
 
 #define KEY_PHONE_SPEED_DIAL	0x250
 #define KEY_PHONE_SPEED_DIAL1	0x250
@@ -861,7 +863,8 @@ struct input_keymap_entry {
 #define SW_ROTATE_LOCK		0x0c  /* set = rotate locked/disabled */
 #define SW_LINEIN_INSERT	0x0d /* set = inserted */
 #define SW_MUTE_DEVICE		0x0e /* set = device disabled */
-#define SW_MAX			0x0f
+#define SW_PHONE_HOOK		0x0f /* set = phone off hook */
+#define SW_MAX			0x10
 #define SW_CNT			(SW_MAX+1)
 
 /*

@@ -109,6 +109,8 @@ static const struct v4l2_queryctrl mt9v126_controls[] = {
 	},
 };
 
+static int mt9v126_set_config(struct v4l2_subdev *sd);
+
 static inline struct mt9v126 *to_mt9v126(struct v4l2_subdev *sd)
 {
 	return container_of(sd, struct mt9v126, sd);
@@ -547,6 +549,7 @@ static int mt9v126_switch_state(struct v4l2_subdev *sd, int new_state)
 {
 	struct i2c_client *client = v4l2_get_subdevdata(sd);
 	int err, state, next_state = -1, unknown_state = -1;
+	int reset_count = 0;
 
 	while (1) {
 		state = mt9v126_get_state(sd);
@@ -554,6 +557,36 @@ static int mt9v126_switch_state(struct v4l2_subdev *sd, int new_state)
 			return state;
 		if (state == new_state)
 			return 0;
+
+		/* Handle a few special cases: */
+		switch (state) {
+		case MT9V126_SYS_STATE_DEAD:
+			/* Make sure we don't loop if the reset doesn't help */
+			if (reset_count > 0) {
+				dev_err(&client->dev,
+					"Sensor still dead after reset!\n");
+				return -EINVAL;
+			}
+			reset_count++;
+			err = mt9v126_hard_reset(sd);
+			if (err) {
+				dev_err(&client->dev,
+					"Failed to reset the sensor, "
+					"recovery not possible\n");
+				return err;
+			}
+			/* Retry */
+			continue;
+		case MT9V126_SYS_STATE_UNCONFIGURED:
+			err = mt9v126_set_config(sd);
+			if (err) {
+				dev_err(&client->dev,
+					"Failed to configure the sensor\n");
+				return err;
+			}
+			/* Continue with the state switch */
+			break;
+		}
 
 		switch (state) {
 		case MT9V126_SYS_STATE_STANDBY:
@@ -685,7 +718,7 @@ static int mt9v126_get_dewarp_state(struct v4l2_subdev *sd,
 	if (output_fmt)
 		*output_fmt = ret[2].int_u8;
 	if (err_status)
-		*err_status = ret[3].int_u8;
+		*err_status = mt9v126_errno(ret[3].int_u8);
 
 	return 0;
 }
@@ -774,15 +807,15 @@ static int mt9v126_enable_dewarp(struct v4l2_subdev *sd, int enable,
 	while (retry > 0) {
 		err = mt9v126_get_dewarp_state(
 			sd, NULL, NULL, NULL, &state);
-		if (err)
+		if (err != 0 && err != -EBUSY)
 			return err;
-		if (state != -EBUSY)
+		if (err == 0 && state != -EBUSY)
 			return state;
 		usleep_range(1000, 10000);
 		retry -= 1;
 	}
 
-	return err;
+	return -EBUSY;
 }
 
 static int mt9v126_get_overlay_state(struct v4l2_subdev *sd,
@@ -1288,13 +1321,6 @@ static int mt9v126_set_config(struct v4l2_subdev *sd)
 		goto error;
 	}
 
-	/* Suspend until the stream start */
-	err = mt9v126_switch_state(sd, MT9V126_SYS_STATE_SUSPENDED);
-	if (err) {
-		dev_err(&client->dev, "Failed to suspend\n");
-		goto error;
-	}
-
 	return 0;
 error:
 	dev_err(&client->dev, "Set config failed (%d)\n", err);
@@ -1313,7 +1339,7 @@ static int mt9v126_try_mbus_fmt(struct v4l2_subdev *sd,
 	} else {
 		fmt->width = 720;
 		fmt->height = 576;
-		fmt->field = V4L2_FIELD_INTERLACED;
+		fmt->field = V4L2_FIELD_SEQ_TB;
 	}
 
 	fmt->code = V4L2_MBUS_FMT_UYVY8_2X8;
@@ -1395,6 +1421,14 @@ static int mt9v126_s_stream(struct v4l2_subdev *sd, int enable)
 	return mt9v126_switch_state(sd, new_state);
 }
 
+static int mt9v126_get_std(struct v4l2_subdev *sd, v4l2_std_id *norm)
+{
+	struct mt9v126 *mt9v126 = to_mt9v126(sd);
+
+	*norm = mt9v126->progressive ? V4L2_STD_UNKNOWN : V4L2_STD_PAL;
+	return 0;
+}
+
 #ifdef CONFIG_VIDEO_ADV_DEBUG
 static int mt9v126_get_register(struct v4l2_subdev *sd,
 				struct v4l2_dbg_register *reg)
@@ -1440,6 +1474,7 @@ static const struct v4l2_subdev_core_ops mt9v126_core_ops = {
 	.g_chip_ident = mt9v126_get_chip_id,
 	.queryctrl = mt9v126_queryctrl,
 	.g_ctrl = mt9v126_get_control,
+	.g_std = mt9v126_get_std,
 #ifdef CONFIG_VIDEO_ADV_DEBUG
 	.g_register = mt9v126_get_register,
 	.s_register = mt9v126_set_register,
@@ -1451,7 +1486,7 @@ static unsigned long mt9v126_query_bus_param(struct soc_camera_device *icd)
 	struct soc_camera_link *icl = to_soc_camera_link(icd);
 	unsigned long flags =
 		SOCAM_MASTER | SOCAM_PCLK_SAMPLE_RISING |
-		SOCAM_HSYNC_ACTIVE_HIGH | SOCAM_VSYNC_ACTIVE_HIGH |
+		SOCAM_HSYNC_ACTIVE_LOW | SOCAM_VSYNC_ACTIVE_LOW |
 		SOCAM_DATA_ACTIVE_HIGH | SOCAM_DATAWIDTH_8;
 	return soc_camera_apply_sensor_flags(icl, flags);
 }
@@ -1548,9 +1583,6 @@ static int mt9v126_probe(struct i2c_client *client,
 	icd->ops = &mt9v126_camera_ops;
 
 	mt9v126_hard_reset(&mt9v126->sd);
-	err = mt9v126_set_config(&mt9v126->sd);
-	if (err)
-		goto error;
 
 	return 0;
 

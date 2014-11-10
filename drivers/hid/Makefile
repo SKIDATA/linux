@@ -11,6 +11,8 @@ obj-$(CONFIG_HID)		+= hid.o
 
 hid-$(CONFIG_HIDRAW)		+= hidraw.o
 
+hid-$(CONFIG_HID_DISPLAY)	+= hid-display.o
+
 hid-logitech-y		:= hid-lg.o
 ifdef CONFIG_LOGITECH_FF
 	hid-logitech-y	+= hid-lgff.o
@@ -27,8 +29,10 @@ endif
 
 obj-$(CONFIG_HID_A4TECH)	+= hid-a4tech.o
 obj-$(CONFIG_HID_ACRUX)		+= hid-axff.o
+obj-$(CONFIG_HID_AD_USB_HANDSET)+= hid-ad-usb-handset.o
 obj-$(CONFIG_HID_APPLE)		+= hid-apple.o
 obj-$(CONFIG_HID_BELKIN)	+= hid-belkin.o
+obj-$(CONFIG_HID_BGU)		+= hid-bgu.o
 obj-$(CONFIG_HID_CHERRY)	+= hid-cherry.o
 obj-$(CONFIG_HID_CHICONY)	+= hid-chicony.o
 obj-$(CONFIG_HID_CYPRESS)	+= hid-cypress.o

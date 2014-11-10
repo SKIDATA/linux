@@ -234,6 +234,7 @@ struct wm8903_priv {
 	int mic_short;
 	int mic_last_report;
 	int mic_delay;
+	struct delayed_work mic_detect_work;
 
 #ifdef CONFIG_GPIOLIB
 	struct gpio_chip gpio_chip;
@@ -1670,7 +1671,9 @@ int wm8903_mic_detect(struct snd_soc_codec *codec, struct snd_soc_jack *jack,
 	/* Enable interrupts we've got a report configured for */
 	if (det)
 		irq_mask &= ~WM8903_MICDET_EINT;
-	if (shrt)
+	/* Short detection is needed to detect headphones
+	 * plugged in a headset jack */
+	if (det || shrt)
 		irq_mask &= ~WM8903_MICSHRT_EINT;
 
 	snd_soc_update_bits(codec, WM8903_INTERRUPT_STATUS_1_MASK,
@@ -1700,6 +1703,26 @@ int wm8903_mic_detect(struct snd_soc_codec *codec, struct snd_soc_jack *jack,
 	return 0;
 }
 EXPORT_SYMBOL_GPL(wm8903_mic_detect);
+
+static void wm8903_mic_detect_work(struct work_struct *work)
+{
+	struct wm8903_priv *wm8903 =
+		container_of(work, struct wm8903_priv, mic_detect_work.work);
+
+	/* When mic short isn't bound to an event don't report the plug
+	 * event when there is a short. This allow differentiating
+	 * headsets from headphones as the headphones short the mic. */
+	if (!wm8903->mic_short &&
+			(wm8903->mic_last_report & wm8903->mic_det)) {
+		int pol = snd_soc_read(wm8903->codec,
+				WM8903_INTERRUPT_POLARITY_1);
+		if (pol & WM8903_MICSHRT_INV)
+			return;
+	}
+
+	snd_soc_jack_report(wm8903->mic_jack, wm8903->mic_last_report,
+			wm8903->mic_det);
+}
 
 static irqreturn_t wm8903_irq(int irq, void *data)
 {
@@ -1743,17 +1766,27 @@ static irqreturn_t wm8903_irq(int irq, void *data)
 
 		mic_report ^= wm8903->mic_det;
 		int_pol ^= WM8903_MICDET_INV;
-
-		msleep(wm8903->mic_delay);
 	}
 
 	snd_soc_update_bits(codec, WM8903_INTERRUPT_POLARITY_1,
 			    WM8903_MICSHRT_INV | WM8903_MICDET_INV, int_pol);
 
-	snd_soc_jack_report(wm8903->mic_jack, mic_report,
-			    wm8903->mic_short | wm8903->mic_det);
-
 	wm8903->mic_last_report = mic_report;
+
+	/* Mic short is debounced in hardware, just report it right away */
+	if (wm8903->mic_short && (int_val & WM8903_MICSHRT_EINT))
+		snd_soc_jack_report(wm8903->mic_jack, mic_report,
+				wm8903->mic_short);
+
+	/* Mic detect must be debounced in software */
+	if (wm8903->mic_det && ((int_val & WM8903_MICDET_EINT) ||
+					!wm8903->mic_short)) {
+		/* Make sure the work isn't running anymore */
+		cancel_delayed_work_sync(&wm8903->mic_detect_work);
+		/* And reschedule again */
+		schedule_delayed_work(
+			&wm8903->mic_detect_work, wm8903->mic_delay);
+	}
 
 	return IRQ_HANDLED;
 }
@@ -2033,6 +2066,9 @@ static int wm8903_probe(struct snd_soc_codec *codec)
 	}
 	
 	if (wm8903->irq) {
+		INIT_DELAYED_WORK(&wm8903->mic_detect_work,
+				wm8903_mic_detect_work);
+
 		if (pdata && pdata->irq_active_low) {
 			trigger = IRQF_TRIGGER_LOW;
 			irq_pol = WM8903_IRQ_POL;
